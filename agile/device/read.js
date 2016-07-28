@@ -26,6 +26,7 @@ module.exports = function (RED) {
       });
   };
 
+  var intv = null;
   function AgileDeviceReadNode(n) {
 
     RED.nodes.createNode(this, n);
@@ -41,25 +42,40 @@ module.exports = function (RED) {
     getClient()
       .then(function (client) {
 
-        // Show the devices list
-        // client.DeviceManager.Devices().then(console.log.bind(console.log))
+        var loadData = function() {
+          // Show the devices list
+          // client.DeviceManager.Devices().then(console.log.bind(console.log))
+          client.Device.Read({
+            deviceId: node.deviceId,
+            componentId: node.componentId
+          }, {
+            requestContentType: 'application/json',
+            responseContentType: 'text/plain'
+          })
+          .then(function(r) {
+            node.log("Got response " + JSON.stringify(r));
+            msg = {
+              payload: r.data
+            };
+            node.send(msg);
+          })
+          .fail(function(e) {
+            // console.warn(arguments);
+            node.error(e.obj, "read error");
+          })
+          ;
+        };
 
-        client.Device.Read({
-          deviceId: node.deviceId,
-          componentId: node.componentId
-        })
-        .then(function(r) {
-          node.log("Got response " + JSON.stringify(r.obj));
-          msg = {
-            payload: r.obj
-          };
-          node.send(msg);
-        })
-        .fail(function(e) {
-          // console.warn('err', e);
-          node.error(e.obj, "read error");
-        })
-        ;
+        if(intv) {
+          clearInterval(intv);
+          intv = null;
+        }
+
+        if(node.interval > 0) {
+          intv = setInterval(loadData, node.interval*1000);
+          loadData();
+        }
+        loadData();
 
       })
       .fail(function (e) {
