@@ -1,0 +1,33 @@
+{
+  "name": "agile-node-red-nodes",
+  "version": "1.0.0",
+  "description": "Agile node-red nodes",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muka/agile-node-red-nodes.git"
+  },
+  "keywords": [
+    "agile",
+    "iot",
+    "node-red",
+    "nodes"
+  ],
+  "author": "Luca Capra <lcapra@create-net.org>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/muka/agile-node-red-nodes/issues"
+  },
+  "homepage": "https://github.com/muka/agile-node-red-nodes#readme",
+  "node-red": {
+    "nodes": {
+      "agile-device-read": "./agile/device/read.js"
+    }
+  },
+  "dependencies": {
+    "swagger-client": "^2.1.16"
+  }
+}

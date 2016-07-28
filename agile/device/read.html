@@ -1,0 +1,67 @@
+<script type="text/x-red" data-template-name="agile-device-read">
+  <div class="form-row">
+    <label for="node-input-deviceId">
+    <i class="fa fa-globe"></i> Device ID</label>
+    <input type="text" id="node-input-deviceId"> </div>
+  <div class="form-row">
+    <label for="node-input-componentId">
+    <i class="fa fa-object-group"></i> Component ID</label>
+    <input type="text" id="node-input-componentId" placeholder="temperature"> </div>
+  <div class="form-row">
+    <label for="node-input-interval">
+    <i class="fa fa-clock-o"></i> Interval</label>
+    <input type="text" id="node-input-interval" placeholder="0"> </div>
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Device.Read()"> </div>
+</script>
+
+<script type="text/x-red" data-help-name="agile-device-read">
+  <p>Read data from a device</p>
+  <p>The <code>msg.payload</code> can contain <a href="http://agile-iot.github.io/agile-api-spec/docs/html/api.html#RecordObject">AGILE RecordObject</a> as a simple json object e.g. <pre>
+msg.payload = {
+  DeviceId: 123456,
+  ComponentId: "temperature",
+  Value: "24.9",
+  Unit: "celsius",
+  Format: "degree"
+  LastUpdate: 1469688715
+}</pre></p>
+  <p>Specifing an <i>interval</i> in seconds allow to poll for data</p>
+
+</script>
+<script type="text/javascript">
+  RED.nodes.registerType('agile-device-read', {
+    category: 'input',
+    color: "#336699",
+    defaults: {
+      name: {
+        value: "Device.Read()"
+      },
+      deviceId: {
+        required: true
+      },
+      componentId: {
+        required: true
+      },
+      interval: {
+        value: 0,
+        validate: function(v) {
+          return ((v === undefined) || (
+            (/^\d+$/).test(v) && v >= 0
+          ));
+        }
+      }
+    },
+    inputs: 0,
+    outputs: 1,
+    icon: "device-read.png",
+    align: "left",
+    label: function() {
+      return this.name || this.baseurl;
+    },
+    labelStyle: function() {
+      return this.name ? "node_label_italic" : "";
+    }
+  });
+</script>
