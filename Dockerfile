@@ -29,4 +29,8 @@ RUN sudo npm install -g q
 
 RUN cd /root && cd .node-red && npm install node-red-dashboard
 
+RUN apt-get clean && apt-get update && apt-get install -y \
+  make
+RUN cd /root && cd .node-red && npm install node-red-contrib-graphs
+
 CMD node-red
