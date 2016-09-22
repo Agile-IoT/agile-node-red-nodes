@@ -21,4 +21,7 @@ COPY . /root/agile-node-red-node
 
 RUN cd /root && mkdir -p .node-red && cd .node-red && npm install /root/agile-node-red-node
 
+# install npm Q
+RUN sudo npm install -g q
+
 CMD node-red
