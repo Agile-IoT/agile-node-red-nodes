@@ -27,4 +27,6 @@ RUN apt-get clean && apt-get update && apt-get install -y \
 # install npm Q
 RUN sudo npm install -g q
 
+RUN cd /root && cd .node-red && npm install node-red-dashboard
+
 CMD node-red
