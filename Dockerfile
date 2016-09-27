@@ -37,4 +37,6 @@ RUN npm -g install npm
 
 RUN cd /root && cd .node-red && npm install node-red-contrib-graphs
 
+RUN cd /root && cd .node-red && npm install node-red-contrib-influxdb
+
 CMD node-red
