@@ -30,7 +30,11 @@ RUN sudo npm install -g q
 RUN cd /root && cd .node-red && npm install node-red-dashboard
 
 RUN apt-get clean && apt-get update && apt-get install -y \
-  make
+  build-essential
+
+#upgrade npm to the newest version, otherwise we get build errors in node-red-contrib-graphs
+RUN npm -g install npm
+
 RUN cd /root && cd .node-red && npm install node-red-contrib-graphs
 
 CMD node-red
