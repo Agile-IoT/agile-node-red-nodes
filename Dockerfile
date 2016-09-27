@@ -15,28 +15,28 @@ RUN apt-get clean && apt-get update && apt-get install -y \
 RUN apt-get clean && apt-get update && apt-get install -y \
   npm 
 
-EXPOSE 1880
-
-COPY . /root/agile-node-red-node
-
-RUN cd /root && mkdir -p .node-red && cd .node-red && npm install /root/agile-node-red-node
-
-RUN apt-get clean && apt-get update && apt-get install -y \
-  curl 
+#upgrade npm to the newest version, otherwise we get build errors in node-red-contrib-graphs
+RUN npm -g install npm
 
 # install npm Q
 RUN sudo npm install -g q
 
-RUN cd /root && cd .node-red && npm install node-red-dashboard
+EXPOSE 1880
+
+COPY . /root/agile-node-red-node
+
+RUN npm install -g /root/agile-node-red-node
+
+RUN apt-get clean && apt-get update && apt-get install -y \
+  curl 
+
+RUN npm install -g node-red-dashboard
 
 RUN apt-get clean && apt-get update && apt-get install -y \
   build-essential
 
-#upgrade npm to the newest version, otherwise we get build errors in node-red-contrib-graphs
-RUN npm -g install npm
+RUN npm install -g node-red-contrib-graphs
 
-RUN cd /root && cd .node-red && npm install node-red-contrib-graphs
-
-RUN cd /root && cd .node-red && npm install node-red-contrib-influxdb
+RUN npm install -g node-red-contrib-influxdb
 
 CMD node-red
