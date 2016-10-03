@@ -1,0 +1,53 @@
+<script type="text/x-red" data-template-name="agile-device-subscribe">
+  <div class="form-row">
+    <label for="node-input-server">
+    <i class="fa fa-globe"></i> Server</label>
+    <input type="text" id="node-input-server"> </div>
+  <div class="form-row">
+    <label for="node-input-deviceId">
+    <i class="fa fa-globe"></i> Device ID</label>
+    <input type="text" id="node-input-deviceId"> </div>
+  <div class="form-row">
+    <label for="node-input-componentId">
+    <i class="fa fa-object-group"></i> Component ID</label>
+    <input type="text" id="node-input-componentId" placeholder="temperature"> </div>
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Device.Subscribe()"> </div>
+</script>
+
+<script type="text/x-red" data-help-name="agile-device-subscribe">
+  <p>Receive data from a device</p>
+</script>
+
+<script type="text/javascript">
+  RED.nodes.registerType('agile-device-subscribe', {
+    category: 'input',
+    color: "#336699",
+    defaults: {
+      server: {
+         value:"",
+         type:"agile-config-server"
+      },
+      name: {
+        value: ""
+      },
+      deviceId: {
+        required: true
+      },
+      componentId: {
+        required: true
+      }
+    },
+    inputs: 0,
+    outputs: 1,
+    icon: "device-read.png",
+    align: "left",
+    label: function() {
+      return this.name ? this.name : (this.deviceId + "." + this.componentId);
+    },
+    labelStyle: function() {
+      return this.name ? "node_label_italic" : "";
+    }
+  });
+</script>

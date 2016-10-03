@@ -1,5 +1,9 @@
 <script type="text/x-red" data-template-name="agile-device-read">
   <div class="form-row">
+    <label for="node-input-server">
+    <i class="fa fa-globe"></i> Server</label>
+    <input type="text" id="node-input-server"> </div>
+  <div class="form-row">
     <label for="node-input-deviceId">
     <i class="fa fa-globe"></i> Device ID</label>
     <input type="text" id="node-input-deviceId"> </div>
@@ -35,8 +39,12 @@ msg.payload = {
     category: 'input',
     color: "#336699",
     defaults: {
+      server: {
+         value:"",
+         type:"agile-config-server"
+      },
       name: {
-        value: "Device.Read()"
+        value: ""
       },
       deviceId: {
         required: true
@@ -58,7 +66,7 @@ msg.payload = {
     icon: "device-read.png",
     align: "left",
     label: function() {
-      return this.name || this.baseurl;
+      return this.name ? this.name : (this.deviceId + "." + this.componentId);
     },
     labelStyle: function() {
       return this.name ? "node_label_italic" : "";

@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/muka/agile-node-red-nodes.git"
+    "url": "git+https://github.com/Agile-IoT/agile-node-red-nodes.git"
   },
   "keywords": [
     "agile",
@@ -19,15 +19,19 @@
   "author": "Luca Capra <lcapra@create-net.org>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/muka/agile-node-red-nodes/issues"
+    "url": "https://github.com/Agile-IoT/agile-node-red-nodes/issues"
   },
-  "homepage": "https://github.com/muka/agile-node-red-nodes#readme",
+  "homepage": "https://github.com/Agile-IoT/agile-node-red-nodes#readme",
   "node-red": {
     "nodes": {
-      "agile-device-read": "./agile/device/read.js"
+      "agile-config-server": "./config/server.js",
+      "agile-device-read": "./device/read.js",
+      "agile-device-subscribe": "./device/subscribe.js"
     }
   },
   "dependencies": {
-    "swagger-client": "^2.1.16"
+    "q": "^1.4.1",
+    "swagger-client": "^2.1.16",
+    "ws": "^1.1.1"
   }
 }
