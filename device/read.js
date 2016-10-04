@@ -1,5 +1,5 @@
 var client = require('../lib/client')
-
+var d = require('debug')('agile-nodes:device:read')
 module.exports = function (RED) {
 
   var intv = null
@@ -17,13 +17,16 @@ module.exports = function (RED) {
     var node = this
     var msg = {}
 
-    client.get(this.server.host, this.server.port)
+    d('API hostname %s:%s', this.server.host, this.server.port)
+    client.get(this.server.host +':'+ this.server.port)
       .then(function (client) {
 
-        node.log('Loaded Swagger client')
+        d('Loaded Swagger client')
 
         var loadData = function () {
-          node.log('Reading data..')
+
+          d('Reading data..')
+
           return client.Device.Read({
             deviceId: node.deviceId,
             componentId: node.componentId
@@ -32,14 +35,25 @@ module.exports = function (RED) {
             responseContentType: 'text/plain'
           })
             .then(function (r) {
-              node.log('Got response: ' + JSON.stringify(r))
+
+              d('Got response: %j', r)
+
               msg = {
                 payload: r.data
               }
+
               node.send(msg)
             })
-            .fail(function (e) {
-              node.error('Error loading data: ' + e)
+            .catch(function (e) {
+
+              d('Failed request %j', e)
+
+              var msg = null
+              if(e.errObj) {
+                msg = e.errObj.code + ' ' + e.method + ' ' + e.url
+              }
+
+              node.error('Error loading data: ' + msg)
             })
         }
 
