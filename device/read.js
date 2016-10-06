@@ -18,7 +18,7 @@ module.exports = function (RED) {
     var msg = {}
 
     d('API hostname %s:%s', this.server.host, this.server.port)
-    client.get(this.server.host +':'+ this.server.port)
+    client.get(this.server.host + ':' + this.server.port)
       .then(function (client) {
 
         d('Loaded Swagger client')
@@ -27,34 +27,40 @@ module.exports = function (RED) {
 
           d('Reading data..')
 
-          return client.Device.Read({
-            deviceId: node.deviceId,
-            componentId: node.componentId
-          }, {
-            requestContentType: 'application/json',
-            responseContentType: 'text/plain'
-          })
-            .then(function (r) {
-
-              d('Got response: %j', r)
-
-              msg = {
-                payload: r.data
-              }
-
-              node.send(msg)
+          var promise
+          try {
+            promise = client.Device.Read({
+              deviceId: node.deviceId,
+              componentId: node.componentId
+            }, {
+              requestContentType: 'application/json',
+              responseContentType: 'text/plain'
             })
-            .catch(function (e) {
+              .then(function (r) {
 
-              d('Failed request %j', e)
+                d('Got response: %j', r)
 
-              var msg = null
-              if(e.errObj) {
-                msg = e.errObj.code + ' ' + e.method + ' ' + e.url
-              }
+                msg = {
+                  payload: r.data
+                }
 
-              node.error('Error loading data: ' + msg)
-            })
+                node.send(msg)
+              })
+              .catch(function (e) {
+
+                d('Failed request %j', e)
+
+                var msg = null
+                if(e.errObj) {
+                  msg = e.method + ' ' + e.url + ': ' + e.errObj.status + ' ' + e.data
+                }
+
+                node.error('Error loading data: ' + msg)
+              })
+          } catch(e) {
+            d('Catch error %j', e)
+          }
+          return promise
         }
 
         if(intv) {

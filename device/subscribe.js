@@ -18,25 +18,29 @@ module.exports = function (RED) {
 
     var ws_url = 'ws://' + this.server.host +
       (this.server.port ? ':' + this.server.port : '') +
-      'ws/device/' +
+      '/ws/device/' +
       this.deviceId +
       '/' + this.componentId +
       '/subscribe'
 
     var ws = new WebSocket(ws_url)
-    d('WS url %s', ws_url)
+    d('Connection to WS url %s', ws_url)
 
-    ws.on('open', function open() {
+    ws.on('open', function () {
       d('Connected to ' + ws_url)
     })
 
-    ws.on('close', function open() {
+    ws.on('close', function () {
       d('Connection closed to ' + ws_url)
+    })
+
+    ws.on('error', function (e) {
+      d('WS Connection error %j', e)
     })
 
     ws.on('message', function (data) {
 
-      d('Data received %s', data)
+      // d('Data received %s', data)
 
       var payload = data
       try {
