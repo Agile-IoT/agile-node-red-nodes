@@ -32,9 +32,6 @@ module.exports = function (RED) {
             promise = client.Device.Read({
               deviceId: node.deviceId,
               componentId: node.componentId
-            }, {
-              requestContentType: 'application/json',
-              responseContentType: 'text/plain'
             })
               .then(function (r) {
 
