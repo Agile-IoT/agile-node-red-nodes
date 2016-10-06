@@ -5,9 +5,10 @@ sudo: required
 services:
   - docker
 
-before_install:
+install:
   - docker pull agileiot/agile-nodered-armv7l
   - docker pull agileiot/agile-nodered-armv7l:$TRAVIS_BRANCH || true
+script:
   - docker build -t agileiot/agile-nodered-armv7l:$TRAVIS_BRANCH .
 after_success:
   - docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
