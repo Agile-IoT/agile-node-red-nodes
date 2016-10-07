@@ -26,7 +26,8 @@
     "nodes": {
       "agile-config-server": "./config/server.js",
       "agile-device-read": "./device/read.js",
-      "agile-device-subscribe": "./device/subscribe.js"
+      "agile-device-subscribe": "./device/subscribe.js",
+      "agile-device-execute": "./device/execute.js"
     }
   },
   "dependencies": {
