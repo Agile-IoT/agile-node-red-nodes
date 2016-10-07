@@ -1,0 +1,23 @@
+language: node_js
+
+sudo: required
+
+services:
+  - docker
+
+env:
+  - IMAGE=agileiot/agile-nodered-armv7l
+
+install:
+  - docker pull $IMAGE
+  - docker pull $IMAGE:$TRAVIS_BRANCH || true
+script:
+  - docker run --rm --privileged multiarch/qemu-user-static:register
+  - docker build -t $IMAGE:$TRAVIS_BRANCH .
+after_success:
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+  - docker push $IMAGE:$TRAVIS_BRANCH;
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      docker tag $IMAGE:$TRAVIS_BRANCH $IMAGE;
+      docker push $IMAGE;
+    fi
