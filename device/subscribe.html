@@ -4,9 +4,9 @@
     <i class="fa fa-globe"></i> Server</label>
     <input type="text" id="node-input-server"> </div>
   <div class="form-row">
-    <label for="node-input-deviceId">
-    <i class="fa fa-globe"></i> Device ID</label>
-    <input type="text" id="node-input-deviceId"> </div>
+    <label for="node-input-deviceId"><i class="fa fa-globe"></i>Device ID</label>
+    <select id="device-type-sel" style="width:270px !important">
+    </select></div>
   <div class="form-row">
     <label for="node-input-componentId">
     <i class="fa fa-object-group"></i> Component ID</label>
@@ -52,6 +52,24 @@
     },
     labelStyle: function() {
       return this.name ? "node_label_italic" : "";
+    },
+    oneditprepare: function() {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', "http://localhost:8080/api/devices/",true);
+      xhr.send();
+      xhr.addEventListener("load", processRequest);
+     function processRequest(e){
+          if ( xhr.status==200) {
+          var deviceIDSel = document.getElementById("device-type-sel");
+          var deviceList = JSON.parse(xhr.responseText);
+          for (var i = 0; i < deviceList.length; i++) {
+            var opt = document.createElement("OPTION");
+            opt.text = deviceList[i].deviceId;
+            opt.value = deviceList[i].deviceId;
+            deviceIDSel.options.add(opt);
+          }
+       }
     }
+  }
   });
 </script>
