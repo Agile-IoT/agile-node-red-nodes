@@ -2,18 +2,21 @@
   <div class="form-row">
     <label for="node-input-server">
     <i class="fa fa-globe"></i> Server</label>
-    <input type="text" id="node-input-server"> </div>
+    <input type="text" id="node-input-server" >
+  </div>
   <div class="form-row">
     <label for="node-input-deviceId"><i class="fa fa-globe"></i>Device ID</label>
     <select id="device-type-sel" style="width:270px !important">
     </select></div>
   <div class="form-row">
-    <label for="node-input-componentId">
-    <i class="fa fa-object-group"></i> Component ID</label>
-    <input type="text" id="node-input-componentId" placeholder="temperature"> </div>
+    <label for="node-input-componentId"> <i class="fa fa-globe"></i> Component</label>
+    <input type="text" id="node-input-name" style="width:270px !important" placeholder="Temperature">
+    </select></div>
   <div class="form-row">
-    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-    <input type="text" id="node-input-name" placeholder="Device.Subscribe()"> </div>
+    <label for="node-input-name">
+    <i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Device.Subscribe()">
+  </div>
 </script>
 
 <script type="text/x-red" data-help-name="agile-device-subscribe">
@@ -33,8 +36,8 @@
         value: ""
       },
       deviceId: {
-        required: true
-      },
+        required: true,
+          },
       componentId: {
         required: true
       }
@@ -53,12 +56,21 @@
     labelStyle: function() {
       return this.name ? "node_label_italic" : "";
     },
+    //Fill device lists
     oneditprepare: function() {
+      var http = "http://";
+      var deviceAPI = "/api/devices/";
       var xhr = new XMLHttpRequest();
-      xhr.open('GET', "http://localhost:8080/api/devices/",true);
-      xhr.send();
-      xhr.addEventListener("load", processRequest);
-     function processRequest(e){
+      var serverInput = document.getElementById("node-input-server");
+
+      serverInput.addEventListener("change", function() {
+         var serverSel = document.getElementById("node-input-server");
+         serverSel =serverSel.options[serverSel.selectedIndex].text;
+         xhr.open('GET', http+serverSel+deviceAPI,true);
+         xhr.send();
+         xhr.addEventListener("load", processRequest);
+        // //update device lists
+        function processRequest(e){
           if ( xhr.status==200) {
           var deviceIDSel = document.getElementById("device-type-sel");
           var deviceList = JSON.parse(xhr.responseText);
@@ -68,8 +80,12 @@
             opt.value = deviceList[i].deviceId;
             deviceIDSel.options.add(opt);
           }
-       }
-    }
+        }
+      }
+});
+ 
+
   }
-  });
+});
+
 </script>
