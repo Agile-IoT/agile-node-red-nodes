@@ -36,8 +36,14 @@ msg.payload = {
 
     var loadList = function(config) {
 
+      var emptyDevices = function() {
+        $(deviceListSelect).empty();
+        $(deviceListSelect).attr('disabled', true)
+      }
+
       if(!config) {
         log('config is empty');
+        emptyDevices();
         return
       }
 
@@ -57,8 +63,7 @@ msg.payload = {
       }
 
       lastConfig = config;
-      $(deviceListSelect).empty();
-      $(deviceListSelect).attr('disabled', true)
+      emptyDevices();
 
       var http = document.location.protocol || "http:";
       var path = "/api/devices/";
