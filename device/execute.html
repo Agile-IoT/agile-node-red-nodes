@@ -1,23 +1,13 @@
 <script type="text/x-red" data-template-name="agile-device-execute">
-  <div class="form-row">
-    <label for="node-input-server">
-    <i class="fa fa-globe"></i> Server</label>
-    <input type="text" id="node-input-server"> </div>
-  <div class="form-row">
-    <label for="node-input-deviceId"><i class="fa fa-globe"></i>Device ID</label>
-    <select id="device-type-sel" style="width:270px !important">
+  <div class="form-row"> <label for="node-input-server">
+    <i class="fa fa-globe"></i> Server</label> <input type="text" id="node-input-server"> </div>
+  <div class="form-row"> <label for="node-input-deviceId"><i class="fa fa-globe"></i>Device ID</label> <select id="device-type-sel" style="width:270px !important">
     </select></div>
-  <div class="form-row">
-    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-    <input type="text" id="node-input-name" placeholder="Device.Execute()"> </div>
+  <div class="form-row"> <label for="node-input-name"><i class="fa fa-tag"></i> Name</label> <input type="text" id="node-input-name" placeholder="Device.Execute()"> </div>
 </script>
-
 <script type="text/x-red" data-help-name="agile-device-execute">
   <p>Execute a command on a device component</p>
-  <p>
-    The <code>msg.command</code> can contain the command label eg
-    <pre>msg.command = "on"</pre>
-  </p>
+  <p> The <code>msg.command</code> can contain the command label eg <pre>msg.command = "on"</pre> </p>
 </script>
 <script type="text/javascript">
   RED.nodes.registerType('agile-device-execute', {
@@ -25,8 +15,8 @@
     color: "#336699",
     defaults: {
       server: {
-         value:"",
-         type:"agile-config-server"
+        value: "",
+        type: "agile-config-server"
       },
       name: {
         value: ""
@@ -40,10 +30,9 @@
     icon: "device-read.png",
     align: "left",
     label: function() {
-      if(this.name) return this.name;
+      if (this.name) return this.name;
       var label = "Device";
-      if(this.deviceId)
-        label = this.deviceId;
+      if (this.deviceId) label = this.deviceId;
       return label + ".Execute()";
     },
     labelStyle: function() {
@@ -51,31 +40,7 @@
     },
     //Fill device lists
     oneditprepare: function() {
-      var http = "http://";
-      var deviceAPI = "/api/devices/";
-      var xhr = new XMLHttpRequest();
-      var serverInput = document.getElementById("node-input-server");
-
-      serverInput.addEventListener("change", function() {
-         var serverSel = document.getElementById("node-input-server");
-         serverSel =serverSel.options[serverSel.selectedIndex].text;
-         xhr.open('GET', http+serverSel+deviceAPI,true);
-         xhr.send();
-         xhr.addEventListener("load", processRequest);
-        // //update device lists
-        function processRequest(e){
-          if ( xhr.status==200) {
-          var deviceIDSel = document.getElementById("device-type-sel");
-          var deviceList = JSON.parse(xhr.responseText);
-          for (var i = 0; i < deviceList.length; i++) {
-            var opt = document.createElement("OPTION");
-            opt.text = deviceList[i].deviceId;
-            opt.value = deviceList[i].deviceId;
-            deviceIDSel.options.add(opt);
-          }
-        }
-      }
-});
-  }
+      window.deviceListLoader('#node-input-server', '#device-type-sel', this);
+    }
   });
 </script>

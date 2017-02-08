@@ -1,25 +1,13 @@
 <script type="text/x-red" data-template-name="agile-device-read">
-  <div class="form-row">
-    <label for="node-input-server">
-    <i class="fa fa-globe"></i> Server</label>
-    <input type="text" id="node-input-server"> </div>
-  <div class="form-row">
-    <label for="node-input-deviceId"><i class="fa fa-globe"></i>Device ID</label>
-    <select id="device-type-sel" style="width:270px !important">
-    </select></div>
-  <div class="form-row">
-    <label for="node-input-componentId">
-    <i class="fa fa-object-group"></i> Component ID</label>
-    <input type="text" id="node-input-componentId" placeholder="temperature"> </div>
-  <div class="form-row">
-    <label for="node-input-interval">
-    <i class="fa fa-clock-o"></i> Interval</label>
-    <input type="text" id="node-input-interval" placeholder="0"> </div>
-  <div class="form-row">
-    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-    <input type="text" id="node-input-name" placeholder="Device.Read()"> </div>
+  <div class="form-row"> <label for="node-input-server">
+    <i class="fa fa-globe"></i> Server</label> <input type="text" id="node-input-server"> </div>
+  <div class="form-row"> <label for="node-input-deviceId"><i class="fa fa-globe"></i>Device ID</label> <select id="device-type-sel" style="width:270px !important"></select></div>
+  <div class="form-row"> <label for="node-input-componentId">
+    <i class="fa fa-object-group"></i> Component ID</label> <input type="text" id="node-input-componentId" placeholder="temperature"> </div>
+  <div class="form-row"> <label for="node-input-interval">
+    <i class="fa fa-clock-o"></i> Interval</label> <input type="text" id="node-input-interval" placeholder="0"> </div>
+  <div class="form-row"> <label for="node-input-name"><i class="fa fa-tag"></i> Name</label> <input type="text" id="node-input-name" placeholder="Device.Read()"> </div>
 </script>
-
 <script type="text/x-red" data-help-name="agile-device-read">
   <p>Read data from a device</p>
   <p>The <code>msg.payload</code> can contain <a href="http://agile-iot.github.io/agile-api-spec/docs/html/api.html#RecordObject">AGILE RecordObject</a> as a simple json object e.g. <pre>
@@ -32,16 +20,91 @@ msg.payload = {
   LastUpdate: 1469688715
 }</pre></p>
   <p>Specifing an <i>interval</i> in seconds allow to poll for data</p>
-
 </script>
 <script type="text/javascript">
+  window.deviceListLoader = function(configSelect, deviceListSelect, node) {
+
+    var log = function() {
+      if(localStorage.debug)
+        console.log.apply(console.log, arguments);
+    }
+
+    log("handle device list load %s, %s, %j", configSelect, deviceListSelect, node);
+
+    var lastConfig = null;
+    var lock = false
+
+    var loadList = function(config) {
+
+      if(!config) {
+        log('config is empty');
+        return
+      }
+
+      // do not load multiple lsit in parallel
+      if (lock) {
+        log("req locked");
+        return;
+      }
+
+      lock = true;
+
+      // do not reload the same list
+      if ((config && config.id) && (lastConfig && lastConfig.id === config.id)) {
+        log('config is the same');
+        lock = false;
+        return;
+      }
+
+      lastConfig = config;
+      $(deviceListSelect).empty();
+      $(deviceListSelect).attr('disabled', true)
+
+      var http = document.location.protocol || "http:";
+      var path = "/api/devices/";
+      var host = config.host === 'agile' ? document.location.hostname : config.host;
+      var port = config.port || '8080';
+      var url = http + "//" + host + ':' + port + path;
+
+      $.getJSON(url)
+        .done(function(json, statusCode, req) {
+          json && json.forEach(function(el) {
+            $(deviceListSelect).append($("<option value='" + el.deviceId + "'>" + el.name + ' (' + el.address + ')' + "</option>"));
+          });
+          $(deviceListSelect).attr('disabled', false)
+        })
+        .fail(function() {
+          RED.notify("Failed to load device list, review server configuration", "error");
+        })
+        .always(function() {
+          log("unlocked");
+          lock = false;
+        });
+    };
+
+    // load initial list
+    var nodeConfig = RED.nodes.node(node.server);
+    loadList(nodeConfig);
+
+    // listen for config changes
+    $(configSelect).on("focus change", function() {
+
+      var configId = $(this).find("option:selected").val()
+      var serverConfig = RED.nodes.node(configId);
+
+      log("select ev", configId, lastConfig && lastConfig.id);
+
+      loadList(serverConfig);
+    });
+  };
+
   RED.nodes.registerType('agile-device-read', {
     category: 'input',
     color: "#336699",
     defaults: {
       server: {
-         value:"",
-         type:"agile-config-server"
+        value: "",
+        type: "agile-config-server"
       },
       name: {
         value: ""
@@ -56,8 +119,7 @@ msg.payload = {
         value: 0,
         validate: function(v) {
           return ((v === undefined) || (
-            (/^\d+$/).test(v) && v >= 0
-          ));
+            (/^\d+$/).test(v) && v >= 0));
         }
       }
     },
@@ -66,10 +128,9 @@ msg.payload = {
     icon: "device-read.png",
     align: "left",
     label: function() {
-      if(this.name) return this.name;
+      if (this.name) return this.name;
       var label = "DeviceX";
-      if(this.deviceId && this.componentId)
-        label = this.deviceId + "." + this.componentId;
+      if (this.deviceId && this.componentId) label = this.deviceId + "." + this.componentId;
       return label + ".Read()";
     },
     labelStyle: function() {
@@ -77,31 +138,8 @@ msg.payload = {
     },
     //Fill device lists
     oneditprepare: function() {
-      var http = "http://";
-      var deviceAPI = "/api/devices/";
-      var xhr = new XMLHttpRequest();
-      var serverInput = document.getElementById("node-input-server");
-
-      serverInput.addEventListener("change", function() {
-         var serverSel = document.getElementById("node-input-server");
-         serverSel =serverSel.options[serverSel.selectedIndex].text;
-         xhr.open('GET', http+serverSel+deviceAPI,true);
-         xhr.send();
-         xhr.addEventListener("load", processRequest);
-        // //update device lists
-        function processRequest(e){
-          if ( xhr.status==200) {
-          var deviceIDSel = document.getElementById("device-type-sel");
-          var deviceList = JSON.parse(xhr.responseText);
-          for (var i = 0; i < deviceList.length; i++) {
-            var opt = document.createElement("OPTION");
-            opt.text = deviceList[i].deviceId;
-            opt.value = deviceList[i].deviceId;
-            deviceIDSel.options.add(opt);
-          }
-        }
-      }
-});
-  }
+      console.warn("oneditprepare");
+      window.deviceListLoader('#node-input-server', '#device-type-sel', this);
+    }
   });
 </script>
