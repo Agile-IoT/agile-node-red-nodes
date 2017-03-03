@@ -1,7 +1,7 @@
 <script type="text/x-red" data-template-name="agile-device-read">
   <div class="form-row"> <label for="node-input-server">
     <i class="fa fa-globe"></i> Server</label> <input type="text" id="node-input-server"> </div>
-  <div class="form-row"> <label for="node-input-deviceId"><i class="fa fa-globe"></i>Device ID</label> <select id="device-type-sel" style="width:270px !important"></select></div>
+    <div class="form-row"> <label for="node-input-deviceId"><i class="fa fa-globe"></i>Device ID</label> <select id="node-input-deviceId" style="width:270px !important"></select></div>
   <div class="form-row"> <label for="node-input-componentId">
     <i class="fa fa-object-group"></i> Component ID</label> <input type="text" id="node-input-componentId" placeholder="temperature"> </div>
   <div class="form-row"> <label for="node-input-interval">
@@ -144,7 +144,7 @@ msg.payload = {
     //Fill device lists
     oneditprepare: function() {
       console.warn("oneditprepare");
-      window.deviceListLoader('#node-input-server', '#device-type-sel', this);
+      window.deviceListLoader('#node-input-server', '#node-input-deviceId', this);
     }
   });
 </script>
