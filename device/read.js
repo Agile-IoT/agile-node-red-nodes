@@ -14,6 +14,7 @@ module.exports = function (RED) {
     this.deviceId = config.deviceId
     this.componentId = config.componentId
 
+
     var node = this
     var msg = {}
 
@@ -36,7 +37,7 @@ module.exports = function (RED) {
               .then(function (r) {
 
                 d('Got response: %j', r)
-
+                node.status({fill:"green",shape:"ring",text:"Device connected"});
                 msg = {
                   payload: r.data
                 }
@@ -46,7 +47,7 @@ module.exports = function (RED) {
               .catch(function (e) {
 
                 d('Failed request %j', e)
-
+                node.status({fill:"red",shape:"ring",text:"Device disconnected"});
                 var msg = null
                 if(e.errObj) {
                   msg = e.method + ' ' + e.url + ': ' + e.errObj.status + ' ' + e.data

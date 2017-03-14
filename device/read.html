@@ -80,8 +80,7 @@ msg.payload = {
           json && json.forEach(function(el) {
             $(deviceListSelect).append($("<option value='" + el.deviceId + "'>" + el.name + ' (' + el.address + ')' + "</option>"));
           });
-          $(deviceListSelect).attr('disabled', false)
-
+          $(deviceListSelect).attr('disabled', false);
         })
         .fail(function() {
           RED.notify("Failed to load device list, review server configuration", "error");
