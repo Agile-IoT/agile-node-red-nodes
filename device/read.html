@@ -59,8 +59,6 @@ msg.payload = {
       // do not reload the same list
       if ((config && config.id) && (lastConfig && lastConfig.id === config.id)) {
         log('config is the same');
-        $(deviceListSelect).val(node.deviceId);
-        loadComponentList($(deviceListSelect).find("option:selected").val());
         lock = false;
         return;
       }
@@ -74,17 +72,27 @@ msg.payload = {
       var port = config.port || '8080';
       url = http + "//" + host + ':' + port + path;
 
+      //get list of devices from the url
       $.getJSON(url)
         .done(function(json, statusCode, req) {
-          log("Reloaded the list");
           json && json.forEach(function(el) {
             $(deviceListSelect).append($("<option value='" + el.deviceId + "'>" + el.name + ' (' + el.address + ')' + "</option>"));
           });
           $(deviceListSelect).attr('disabled', false);
+
+          //check if the deviceId of the node is in the list, set as selected option
+          $(deviceListSelect).find('option').each(function() {
+          if($(this).val()===node.deviceId)
+            $(deviceListSelect).val(node.deviceId);
+          });
+
+          //load the list of devices
           loadComponentList($(deviceListSelect).find("option:selected").val());
         })
         .fail(function() {
+          //devices could not be loaded, empty the component list
           RED.notify("Failed to load device list, review server configuration", "error");
+          emptyComponents();
         })
         .always(function() {
           log("unlocked");
@@ -92,15 +100,15 @@ msg.payload = {
         });
     };
 
+    //function to empty the list of components
+    var emptyComponents = function() {
+      $(componentListSelect).empty();
+      $(componentListSelect).attr('disabled', true)
+    }
 
-
+    //function to load the list of components in a device
     var loadComponentList=function(deviceId){
-
-          var emptyComponents = function() {
-            $(componentListSelect).empty();
-            $(componentListSelect).attr('disabled', true)
-          }
-
+          //reuse the same url to get the list of devices
           var deviceUrl=url+deviceId+'/';
           $.getJSON(deviceUrl)
             .done(function(json, statusCode, req) {
@@ -109,20 +117,25 @@ msg.payload = {
                 $(componentListSelect).append($("<option value='" + el.id + "'>" + el.id + "</option>"));
               });
               $(componentListSelect).attr('disabled', false);
-              //Load Component for the selected
+              //Maintain persistence with the chosen component
+              // $(componentListSelect).find('option').each(function() {
+              //   if($(this).val()===node.componentId)
+              //     $(componentListSelect).val(node.componentId);
+              //   });
             })
             .fail(function() {
-              log(deviceUrl);
-              RED.notify("Failed to load device list, review device configuration", "error");
+              RED.notify("Failed to load component list for selected device", "error");
             })
 
         };
 
-        $(deviceListSelect).on("focus change", function() {
-          var deviceId = $(this).find("option:selected").val()
-          if(deviceId)
-          loadComponentList(deviceId);
-        });
+
+    //event listener for shift in focus of device selected
+    $(deviceListSelect).on("focus change", function() {
+      var deviceId = $(this).find("option:selected").val();
+      if(deviceId)
+      loadComponentList(deviceId);
+    });
 
 
     // load initial list
@@ -136,7 +149,6 @@ msg.payload = {
       var serverConfig = RED.nodes.node(configId);
 
       log("select ev", configId, lastConfig && lastConfig.id);
-      //log('The URL on state change is '+url);
       loadList(serverConfig);
     });
   };
