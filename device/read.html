@@ -115,13 +115,14 @@ msg.payload = {
               log(deviceUrl);
               RED.notify("Failed to load device list, review device configuration", "error");
             })
-            // .always(function() {
-            //   log("unlocked");
-            //   lock = false;
-            // });
+
         };
 
-
+        $(deviceListSelect).on("focus change", function() {
+          var deviceId = $(this).find("option:selected").val()
+          if(deviceId)
+          loadComponentList(deviceId);
+        });
 
 
     // load initial list
