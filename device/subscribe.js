@@ -54,5 +54,6 @@ module.exports = function (RED) {
       })
     })
 
+    node.on('close', function() {
   })
 }
