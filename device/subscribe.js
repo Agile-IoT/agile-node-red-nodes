@@ -54,6 +54,9 @@ module.exports = function (RED) {
       })
     })
 
+    //When node is redeployed, close the websocket Connection
     node.on('close', function() {
+    ws.close();
+    });
   })
 }
