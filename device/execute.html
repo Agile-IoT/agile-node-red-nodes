@@ -1,15 +1,158 @@
 <script type="text/x-red" data-template-name="agile-device-execute">
   <div class="form-row"> <label for="node-input-server">
     <i class="fa fa-globe"></i> Server</label> <input type="text" id="node-input-server"> </div>
-  <div class="form-row"> <label for="node-input-deviceId"><i class="fa fa-globe"></i>Device ID</label> <select id="device-type-sel" style="width:270px !important">
-    </select></div>
+    <div class="form-row"> <label for="node-input-deviceId"><i class="fa fa-globe"></i>Device ID</label> <select id="node-input-deviceId" style="width:270px !important"></select></div>
+  <div class="form-row"> <label for="node-input-commandId">
+    <i class="fa fa-object-group"></i> Command ID</label> <select id="node-input-commandId"> </select> </div>
   <div class="form-row"> <label for="node-input-name"><i class="fa fa-tag"></i> Name</label> <input type="text" id="node-input-name" placeholder="Device.Execute()"> </div>
 </script>
 <script type="text/x-red" data-help-name="agile-device-execute">
-  <p>Execute a command on a device component</p>
-  <p> The <code>msg.command</code> can contain the command label eg <pre>msg.command = "on"</pre> </p>
+  <p>Execute data from a device</p>
+  <p>The <code>msg.payload</code> can contain <a href="http://agile-iot.github.io/agile-api-spec/docs/html/api.html#RecordObject">AGILE RecordObject</a> as a simple json object e.g. <pre>
+msg.payload = {
+  DeviceId: 123456,
+  CommandId: "temperature",
+  Value: "24.9",
+  Unit: "celsius",
+  Format: "degree"
+  LastUpdate: 1469688715
+}</pre></p>
+  <p>Specifing an <i>interval</i> in seconds allow to poll for data</p>
 </script>
 <script type="text/javascript">
+  window.deviceListLoader = function(configSelect, deviceListSelect, commandListSelect, node) {
+
+    var http,host,port,path,url;
+    var log = function() {
+      if(localStorage.debug)
+        console.log.apply(console.log, arguments);
+    }
+
+    log("handle device list load %s, %s, %j", configSelect, deviceListSelect, commandListSelect, node);
+
+    var lastConfig = null;
+    var lock = false
+
+    var loadList = function(config) {
+
+      var emptyDevices = function() {
+        $(deviceListSelect).empty();
+        $(deviceListSelect).attr('disabled', true)
+      }
+
+      if(!config) {
+        log('config is empty dude');
+        emptyDevices();
+        return
+      }
+
+      // do not load multiple lsit in parallel
+      if (lock) {
+        log("req locked");
+        return;
+      }
+
+      lock = true;
+
+      // do not reload the same list
+      if ((config && config.id) && (lastConfig && lastConfig.id === config.id)) {
+        log('config is the same dude');
+        lock = false;
+        return;
+      }
+
+      lastConfig = config;
+      emptyDevices();
+
+      http = document.location.protocol || "http:";
+      host = config.host === 'agile' ? document.location.hostname : config.host;
+      port = config.port || '8080';
+      path = "/api/devices/";
+      url = http + "//" + host + ':' + port + path;
+      //get list of devices from the url
+      $.getJSON(url)
+        .done(function(json, statusCode, req) {
+          json && json.forEach(function(el) {
+            $(deviceListSelect).append($("<option value='" + el.deviceId + "'>" + el.name + ' (' + el.address + ')' + "</option>"));
+          });
+          $(deviceListSelect).attr('disabled', false);
+
+          //check if the deviceId of the node is in the list, set as selected option
+          $(deviceListSelect).find('option').each(function() {
+          if($(this).val()===node.deviceId)
+            $(deviceListSelect).val(node.deviceId);
+          });
+
+          //load the list of devices
+          loadCommandList($(deviceListSelect).find("option:selected").val());
+        })
+        .fail(function() {
+          //devices could not be loaded, empty the command list
+          RED.notify("Failed to load device list, review server configuration", "error");
+          emptyCommands();
+        })
+        .always(function() {
+          log("unlocked");
+          lock = false;
+        });
+    };
+
+    //function to empty the list of commands
+    var emptyCommands = function() {
+      $(commandListSelect).empty();
+      $(commandListSelect).attr('disabled', true)
+    }
+
+    //function to load the list of commands in a device
+    var loadCommandList=function(deviceId){
+          //reuse the same url to get the list of devices
+          //var deviceUrl=url+deviceId+'/commands';
+          path = '/api/device/'+deviceId+'/commands'
+          var commandUrl = http + "//" + host + ':' + port + path;
+          $.getJSON(commandUrl)
+            .done(function(json, statusCode, req) {
+              log(json)
+              emptyCommands();
+              json && json.forEach(function(el) {
+                $(commandListSelect).append($("<option value='" + el + "'>" + el + "</option>"));
+              });
+              $(commandListSelect).attr('disabled', false);
+              //Maintain persistence with the chosen command
+              // $(commandListSelect).find('option').each(function() {
+              //   if($(this).val()===node.commandId)
+              //     $(commandListSelect).val(node.commandId);
+              //   });
+            })
+            .fail(function() {
+              RED.notify("Failed to load command list for selected device", "error");
+            })
+
+        };
+
+
+    //event listener for shift in focus of device selected
+    $(deviceListSelect).on("focus change", function() {
+      var deviceId = $(this).find("option:selected").val();
+      if(deviceId)
+      loadCommandList(deviceId);
+    });
+
+
+    // load initial list
+    var nodeConfig = RED.nodes.node(node.server);
+    log('Loading with the server node configuration')
+    loadList(nodeConfig);
+
+    // listen for config changes
+    $(configSelect).on("focus change", function() {
+      var configId = $(this).find("option:selected").val()
+      var serverConfig = RED.nodes.node(configId);
+
+      log("select ev", configId, lastConfig && lastConfig.id);
+      loadList(serverConfig);
+    });
+  };
+
   RED.nodes.registerType('agile-device-execute', {
     category: 'agile',
     color: "#336699",
@@ -23,16 +166,19 @@
       },
       deviceId: {
         required: true
+      },
+      commandId: {
+        required: true
       }
     },
-    inputs: 1,
-    outputs: 0,
-    icon: "device-read.png",
+    inputs: 0,
+    outputs: 1,
+    icon: "device-execute.png",
     align: "left",
     label: function() {
       if (this.name) return this.name;
-      var label = "Device";
-      if (this.deviceId) label = this.deviceId;
+      var label = "DeviceX";
+      if (this.deviceId && this.commandId) label = this.deviceId + "." + this.commandId;
       return label + ".Execute()";
     },
     labelStyle: function() {
@@ -40,7 +186,8 @@
     },
     //Fill device lists
     oneditprepare: function() {
-      window.deviceListLoader('#node-input-server', '#device-type-sel', this);
+      console.warn("oneditprepare");
+      window.deviceListLoader('#node-input-server', '#node-input-deviceId','#node-input-commandId', this);
     }
   });
 </script>
