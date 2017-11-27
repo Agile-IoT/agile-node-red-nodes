@@ -11,6 +11,7 @@ module.exports = function (RED) {
 
     this.name = config.name
     this.deviceId = config.deviceId
+    this.commandId = config.commandId
 
     var node = this
     var msg = {}
@@ -21,7 +22,7 @@ module.exports = function (RED) {
 
         d('Loaded Swagger client')
 
-        var exec = function (args) {
+        var exec = function () {
 
           d('Sending command..')
 
@@ -29,7 +30,7 @@ module.exports = function (RED) {
           try {
             promise = client.Device.Execute({
               deviceId: node.deviceId,
-              command: args.command
+              command: node.commandId
             })
               .then(function (r) {
 
@@ -57,14 +58,16 @@ module.exports = function (RED) {
           return promise
         }
 
-        node.on('input', function (msg) {
-          if(!msg.command) {
-            node.error('Cannot execute command: msg.command not set')
-            return
-          }
-          node.log('Executing ' + msg.command)
-          exec(msg)
-        })
+        exec();
+
+        // node.on('input', function (msg) {
+        //   if(!msg.command) {
+        //     node.error('Cannot execute command: msg.command not set')
+        //     return
+        //   }
+        //   node.log('Executing ' + msg.command)
+        //   exec(msg)
+        // })
 
 
       })
