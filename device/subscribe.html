@@ -12,7 +12,7 @@
 </script>
 <script type="text/javascript">
 
-window.deviceListLoader = function(configSelect, deviceListSelect, componentListSelect, node) {
+window.deviceListLoaderSubscribe = function(configSelect, deviceListSelect, componentListSelect, node) {
 
   var log = function() {
     if(localStorage.debug)
@@ -20,7 +20,6 @@ window.deviceListLoader = function(configSelect, deviceListSelect, componentList
   }
 
   log("handle device list load %s, %s, %j", configSelect, deviceListSelect, componentListSelect, node);
-
   var lastConfig = null;
   var lock = false
   var url;
@@ -180,7 +179,7 @@ window.deviceListLoader = function(configSelect, deviceListSelect, componentList
     },
     //Fill device lists
     oneditprepare: function() {
-      window.deviceListLoader('#node-input-server', '#node-input-deviceId','#node-input-componentId', this);
+      window.deviceListLoaderSubscribe('#node-input-server', '#node-input-deviceId','#node-input-componentId', this);
     }
   });
 </script>

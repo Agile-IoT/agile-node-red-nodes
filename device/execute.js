@@ -24,7 +24,7 @@ module.exports = function (RED) {
 
         var exec = function () {
 
-          d('Sending command..')
+        d('Sending command..')
 
           var promise
           try {

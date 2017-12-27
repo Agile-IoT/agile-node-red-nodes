@@ -20,7 +20,7 @@ msg.payload = {
   <p>Specifing an <i>interval</i> in seconds allow to poll for data</p>
 </script>
 <script type="text/javascript">
-  window.deviceListLoader = function(configSelect, deviceListSelect, commandListSelect, node) {
+  window.deviceListLoaderExecute = function(configSelect, deviceListSelect, commandListSelect, node) {
 
     var http,host,port,path,url;
     var log = function() {
@@ -41,7 +41,7 @@ msg.payload = {
       }
 
       if(!config) {
-        log('config is empty dude');
+        log('config is empty');
         emptyDevices();
         return
       }
@@ -56,7 +56,7 @@ msg.payload = {
 
       // do not reload the same list
       if ((config && config.id) && (lastConfig && lastConfig.id === config.id)) {
-        log('config is the same dude');
+        log('config is the same');
         lock = false;
         return;
       }
@@ -187,7 +187,7 @@ msg.payload = {
     //Fill device lists
     oneditprepare: function() {
       console.warn("oneditprepare");
-      window.deviceListLoader('#node-input-server', '#node-input-deviceId','#node-input-commandId', this);
+      window.deviceListLoaderExecute('#node-input-server', '#node-input-deviceId','#node-input-commandId', this);
     }
   });
 </script>
