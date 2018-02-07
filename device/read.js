@@ -16,7 +16,6 @@ module.exports = function (RED) {
 
 
     var node = this
-    var msg = {}
 
     d('API hostname %s:%s', this.server.host, this.server.port)
     client.get(this.server.host + ':' + this.server.port)
@@ -30,7 +29,7 @@ module.exports = function (RED) {
 
           var promise
           try {
-            promise = client.Device.ReadData({
+            promise = client.Device.Read({
               deviceId: node.deviceId,
               componentId: node.componentId
             })
@@ -38,11 +37,17 @@ module.exports = function (RED) {
 
                 d('Got response: %j', r)
                 node.status({fill:"green",shape:"ring",text:"Device connected"});
-                msg = {
-                  payload: r.data
+
+                var payload = r.obj[0] // workaround! for some reason swagger wraps the response in an array
+                try {
+                  payload = JSON.parse(payload)
+                } catch(e) {
+                  // failed to parse
                 }
 
-                node.send(msg)
+                node.send({
+                  payload: payload
+                })
               })
               .catch(function (e) {
 
