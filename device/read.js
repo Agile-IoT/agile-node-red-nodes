@@ -30,7 +30,7 @@ module.exports = function (RED) {
 
           var promise
           try {
-            promise = client.Device.ReadData({
+            promise = client.Device.Read({
               deviceId: node.deviceId,
               componentId: node.componentId
             })
