@@ -38,7 +38,7 @@ module.exports = function (RED) {
                 d('Got response: %j', r)
                 node.status({fill:"green",shape:"ring",text:"Device connected"});
 
-                var payload = r.obj[0] // workaround! for some reason swagger wraps the response in an array
+                var payload = r.data
                 try {
                   payload = JSON.parse(payload)
                 } catch(e) {
