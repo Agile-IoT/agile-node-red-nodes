@@ -1,0 +1,191 @@
+<!--
+Copyright (C) 2017 FBK, ATOS.
+All rights reserved. This program and the accompanying materials
+are made available under the terms of the Eclipse Public License v1.0
+which accompanies this distribution, and is available at
+http://www.eclipse.org/legal/epl-v10.html
+
+Contributors:
+    FBK, ATOS - initial API and implementation
+-->
+
+<!-- Value: "24.9",
+  Unit: "celsius",
+  Format: "degree"
+  LastUpdate: 1469688715 -->
+<script type="text/x-red" data-template-name="agile-device-write">
+  <div class="form-row"> <label for="node-input-server">
+    <i class="fa fa-globe"></i> Server</label> <input type="text" id="node-input-server"> </div>
+    <div class="form-row"> <label for="node-input-deviceId"><i class="fa fa-globe"></i>Device ID</label> <select id="node-input-deviceId" style="width:270px !important"></select></div>
+  <div class="form-row"> <label for="node-input-componentId">
+    <i class="fa fa-object-group"></i> Component ID</label> <select id="node-input-componentId"> </select> </div>
+  <!-- <div class="form-row"> <label for="node-input-commandId">
+    <i class="fa fa-object-group"></i> Command ID</label> <select id="node-input-commandId"> </select> </div> -->
+  <div class="form-row"> <label for="node-input-name"><i class="fa fa-tag"></i> Name</label> <input type="text" id="node-input-name" placeholder="Device.Write()"> </div>
+</script>
+<script type="text/x-red" data-help-name="agile-device-write">
+  <p>Write data to a device</p>
+  <p>The <code>msg.payload</code> can contain <a href="http://agile-iot.github.io/agile-api-spec/docs/html/api.html#RecordObject">AGILE RecordObject</a> as a simple json object e.g. <pre>
+msg.payload = {
+  DeviceId: 123456,
+  Payload: "temperature"
+}</pre></p>
+  <p>Specifing an <i>interval</i> in seconds allow to poll for data</p>
+</script>
+<script type="text/javascript">
+  window.deviceListLoaderWrite = function(configSelect, deviceListSelect, componentListSelect, node) {
+
+    var http,host,port,path,url;
+    var log = function() {
+      if(localStorage.debug)
+        console.log.apply(console.log, arguments);
+    }
+
+    log("handle device list load %s, %s, %j", configSelect, deviceListSelect, componentListSelect, node);
+
+    var lastConfig = null;
+    var lock = false
+
+    var loadList = function(config) {
+
+      var emptyDevices = function() {
+        $(deviceListSelect).empty();
+        $(deviceListSelect).attr('disabled', true)
+      }
+
+      if(!config) {
+        log('config is empty dude');
+        emptyDevices();
+        return
+      }
+
+      // do not load multiple lsit in parallel
+      if (lock) {
+        log("req locked");
+        return;
+      }
+
+      lock = true;
+
+      // do not reload the same list
+      if ((config && config.id) && (lastConfig && lastConfig.id === config.id)) {
+        log('config is the same dude');
+        lock = false;
+        return;
+      }
+
+      lastConfig = config;
+      emptyDevices();
+
+      http = document.location.protocol || "http:";
+      host = config.host === 'agile' ? document.location.hostname : config.host;
+      port = config.port || '8080';
+      path = "/api/devices/";
+      url = http + "//" + host + ':' + port + path;
+      //get list of devices from the url
+      $.getJSON(url)
+        .done(function(json, statusCode, req) {
+          json && json.forEach(function(el) {
+            $(deviceListSelect).append($("<option value='" + el.deviceId + "'>" + el.name + ' (' + el.address + ')' + "</option>"));
+          });
+          $(deviceListSelect).attr('disabled', false);
+
+          //check if the deviceId of the node is in the list, set as selected option
+          $(deviceListSelect).find('option').each(function() {
+          if($(this).val()===node.deviceId)
+            $(deviceListSelect).val(node.deviceId);
+          });
+
+          //load the list of components
+          loadComponentList($(deviceListSelect).find("option:selected").val());
+
+        })
+        .fail(function() {
+          //devices could not be loaded
+          RED.notify("Failed to load device list, review server configuration", "error");
+          emptyComponents();
+        })
+        .always(function() {
+          log("unlocked");
+          lock = false;
+        });
+    };
+
+    //function to empty the list of components
+    var emptyComponents = function() {
+      $(componentListSelect).empty();
+      $(componentListSelect).attr('disabled', true)
+    }
+
+    //function to load the list of components in a device
+    var loadComponentList=function(deviceId){
+          //reuse the same url to get the list of devices
+          var deviceUrl=url+deviceId+'/';
+          $.getJSON(deviceUrl)
+            .done(function(json, statusCode, req) {
+              emptyComponents();
+              json.streams && json.streams.forEach(function(el) {
+                $(componentListSelect).append($("<option value='" + el.id + "'>" + el.id + "</option>"));
+              });
+              $(componentListSelect).attr('disabled', false);
+            })
+            .fail(function() {
+              RED.notify("Failed to load component list for selected device", "error");
+            })
+
+        };
+
+    // load initial list
+    var nodeConfig = RED.nodes.node(node.server);
+    log('Loading with the server node configuration')
+    loadList(nodeConfig);
+
+    // listen for config changes
+    $(configSelect).on("focus change", function() {
+      var configId = $(this).find("option:selected").val()
+      var serverConfig = RED.nodes.node(configId);
+
+      log("select ev", configId, lastConfig && lastConfig.id);
+      loadList(serverConfig);
+    });
+  };
+
+  RED.nodes.registerType('agile-device-write', {
+    category: 'agile',
+    color: "#336699",
+    defaults: {
+      server: {
+        value: "",
+        type: "agile-config-server"
+      },
+      name: {
+        value: ""
+      },
+      deviceId: {
+        required: true
+      },
+      componentId: {
+        required: true
+      },
+    },
+    inputs: 1,
+    outputs: 0,
+    icon: "device-execute.png",
+    align: "left",
+    label: function() {
+      if (this.name) return this.name;
+      var label = "DeviceX";
+      if (this.deviceId) label = this.deviceId + ".Write";
+      return label + ".Write()";
+    },
+    labelStyle: function() {
+      return this.name ? "node_label_italic" : "";
+    },
+    //Fill device lists
+    oneditprepare: function() {
+      console.warn("oneditprepare");
+      window.deviceListLoaderWrite('#node-input-server', '#node-input-deviceId', '#node-input-componentId', this);
+      // ,'#node-input-commandId'
+    }
+  });
+</script>
