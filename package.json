@@ -17,7 +17,7 @@
     "nodes"
   ],
   "author": "Luca Capra <lcapra@create-net.org>",
-  "license": "MIT",
+  "license": "EPL-2.0",
   "bugs": {
     "url": "https://github.com/Agile-IoT/agile-node-red-nodes/issues"
   },
