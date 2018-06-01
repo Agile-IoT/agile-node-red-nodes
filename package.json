@@ -28,7 +28,8 @@
       "agile-device-read": "./device/read.js",
       "agile-device-subscribe": "./device/subscribe.js",
       "agile-device-execute": "./device/execute.js",
-      "agile-device-write": "./device/write.js"
+      "agile-device-write": "./device/write.js",
+      "agile-device-decoder": "./device/decoder.js"
     }
   },
   "dependencies": {

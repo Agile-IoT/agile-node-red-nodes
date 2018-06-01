@@ -1,0 +1,311 @@
+<!--
+Copyright (C) 2017 FBK, ATOS.
+All rights reserved. This program and the accompanying materials
+are made available under the terms of the Eclipse Public License 2.0
+which accompanies this distribution, and is available at
+https://www.eclipse.org/legal/epl-2.0/
+
+SPDX-License-Identifier: EPL-2.0
+
+Contributors:
+    FBK, ATOS - initial API and implementation
+-->
+<script type="text/x-red" data-template-name="agile-device-decoder">
+  <div class="form-row"> 
+    <label for="node-input-server">
+      <i class="fa fa-globe"></i> Server
+    </label> 
+    <input type="text" id="node-input-server"> 
+  </div>
+  <div class="form-row"> 
+    <label for="node-input-deviceId">
+      <i class="fa fa-globe"></i>Device ID
+    </label> 
+    <select id="node-input-deviceId" style="width:270px !important"></select>
+  </div>
+  <div class="form-row"> 
+    <label for="node-input-componentId">
+      <i class="fa fa-object-group"></i> Component ID
+    </label> 
+    <select id="node-input-componentId"> </select> 
+  </div>
+  <div class="form-row"> 
+    <label for="node-input-interval">
+      <i class="fa fa-clock-o"></i> Interval
+    </label> 
+    <input type="text" id="node-input-interval" placeholder="0"> 
+  </div>
+  <div class="form-row"> 
+    <label for="node-input-name">
+      <i class="fa fa-tag"></i> Name
+    </label> 
+    <input type="text" id="node-input-name" placeholder="Device.Read()"> 
+  </div>
+  <div class="form-row" style="margin-bottom: 0px;">
+    <label for="node-input-func"><i class="fa fa-wrench"></i> <span data-i18n="function.label.function"></span></label>
+    <input type="hidden" id="node-input-func" autofocus="autofocus">
+    <input type="hidden" id="node-input-noerr">
+  </div>
+  <div class="form-row node-text-editor-row">
+    <div style="height: 250px; min-height:150px;" class="node-text-editor" id="node-input-func-editor" ></div>
+  </div>
+</script>
+<script type="text/x-red" data-help-name="agile-device-decoder">
+  <p>Read and decode data from a device</p>
+  <p>The <code>msg.payload</code> can contain <a href="http://agile-iot.github.io/agile-api-spec/docs/html/api.html#RecordObject">AGILE RecordObject</a> as a simple json object e.g. <pre>
+msg.payload = {
+  DeviceId: 123456,
+  ComponentId: "temperature",
+  Value: "24.9",
+  Unit: "celsius",
+  Format: "degree"
+  LastUpdate: 1469688715
+}</pre></p>
+  <p>Specifing an <i>interval</i> in seconds allow to poll for data</p>
+</script>
+<script type="text/javascript">
+  window.deviceListLoaderRead = function(configSelect, deviceListSelect, componentListSelect, node) {
+
+    var log = function() {
+      if(localStorage.debug)
+        console.log.apply(console.log, arguments);
+    }
+
+    log("handle device list load %s, %s, %j", configSelect, deviceListSelect, componentListSelect, node);
+
+    var lastConfig = null;
+    var lock = false
+    var url;
+
+    var loadList = function(config) {
+
+      var emptyDevices = function() {
+        $(deviceListSelect).empty();
+        $(deviceListSelect).attr('disabled', true)
+      }
+
+      if(!config) {
+        log('config is empty');
+        emptyDevices();
+        return
+      }
+
+      // do not load multiple lsit in parallel
+      if (lock) {
+        log("req locked");
+        return;
+      }
+
+      lock = true;
+
+      // do not reload the same list
+      if ((config && config.id) && (lastConfig && lastConfig.id === config.id)) {
+        log('config is the same');
+        lock = false;
+        return;
+      }
+
+      lastConfig = config;
+      emptyDevices();
+
+      var http = document.location.protocol || "http:";
+      var path = "/api/devices/";
+      var host = config.host === 'agile' ? document.location.hostname : config.host;
+      var port = config.port || '8080';
+      url = http + "//" + host + ':' + port + path;
+
+      //get list of devices from the url
+      $.getJSON(url)
+        .done(function(json, statusCode, req) {
+          json && json.forEach(function(el) {
+            $(deviceListSelect).append($("<option value='" + el.deviceId + "'>" + el.name + ' (' + el.address + ')' + "</option>"));
+          });
+          $(deviceListSelect).attr('disabled', false);
+
+          //check if the deviceId of the node is in the list, set as selected option
+          $(deviceListSelect).find('option').each(function() {
+          if($(this).val()===node.deviceId)
+            $(deviceListSelect).val(node.deviceId);
+          });
+
+          //load the list of devices
+          loadComponentList($(deviceListSelect).find("option:selected").val());
+        })
+        .fail(function() {
+          //devices could not be loaded, empty the component list
+          RED.notify("Failed to load device list, review server configuration", "error");
+          emptyComponents();
+        })
+        .always(function() {
+          log("unlocked");
+          lock = false;
+        });
+    };
+
+    //function to empty the list of components
+    var emptyComponents = function() {
+      $(componentListSelect).empty();
+      $(componentListSelect).attr('disabled', true)
+    }
+
+    //function to load the list of components in a device
+    var loadComponentList=function(deviceId){
+          //reuse the same url to get the list of devices
+          var deviceUrl=url+deviceId+'/';
+          $.getJSON(deviceUrl)
+            .done(function(json, statusCode, req) {
+              emptyComponents();
+              json.streams && json.streams.forEach(function(el) {
+                $(componentListSelect).append($("<option value='" + el.id + "'>" + el.id + "</option>"));
+              });
+              $(componentListSelect).attr('disabled', false);
+              //Maintain persistence with the chosen component
+              // $(componentListSelect).find('option').each(function() {
+              //   if($(this).val()===node.componentId)
+              //     $(componentListSelect).val(node.componentId);
+              //   });
+            })
+            .fail(function() {
+              RED.notify("Failed to load component list for selected device", "error");
+            })
+
+        };
+
+
+    //event listener for shift in focus of device selected
+    $(deviceListSelect).on("focus change", function() {
+      var deviceId = $(this).find("option:selected").val();
+      if(deviceId)
+      loadComponentList(deviceId);
+    });
+
+
+    // load initial list
+    var nodeConfig = RED.nodes.node(node.server);
+    log('Loading with the server node configuration')
+    loadList(nodeConfig);
+
+    // listen for config changes
+    $(configSelect).on("focus change", function() {
+      var configId = $(this).find("option:selected").val()
+      var serverConfig = RED.nodes.node(configId);
+
+      log("select ev", configId, lastConfig && lastConfig.id);
+      loadList(serverConfig);
+    });
+  };
+
+  RED.nodes.registerType('agile-device-decoder', {
+    category: 'agile',
+    color: "#336699",
+    defaults: {
+      server: {
+        value: "",
+        type: "agile-config-server"
+      },
+      name: {
+        value: ""
+      },
+      deviceId: {
+        required: true
+      },
+      componentId: {
+        required: true
+      },
+      func: {value:"\nreturn msg;"},
+      noerr: {value:0,required:true,validate:function(v) { return ((!v) || (v === 0)) ? true : false; }},
+      interval: {
+        value: 0,
+        validate: function(v) {
+          return ((v === undefined) || (
+            (/^\d+$/).test(v) && v >= 0));
+        }
+      }
+    },
+    inputs: 0,
+    outputs: 1,
+    icon: "device-read.png",
+    align: "left",
+    label: function() {
+      if (this.name) return this.name;
+      var label = "DeviceX";
+      if (this.deviceId && this.componentId) label = this.deviceId + "." + this.componentId;
+      return label + ".Read()";
+    },
+    labelStyle: function() {
+      return this.name ? "node_label_italic" : "";
+    },
+    //Fill device lists
+    oneditprepare: function() {
+      console.warn("oneditprepare");
+      window.deviceListLoaderRead('#node-input-server', '#node-input-deviceId','#node-input-componentId', this);
+      var that = this;
+      $( "#node-input-outputs" ).spinner({
+          min:1,
+          change: function(event, ui) {
+              var value = this.value;
+              if (!value.match(/^\d+$/)) { value = 1;  }
+              else if (value < this.min) { value = this.min; }
+              if (value !== this.value) { $(this).spinner("value", value); }
+          }
+      });
+      this.editor = RED.editor.createEditor({
+          id: 'node-input-func-editor',
+          mode: 'ace/mode/javascript',
+          value: $("#node-input-func").val(),
+          globals: {
+              msg:true,
+              context:true,
+              RED: true,
+              util: true,
+              flow: true,
+              global: true,
+              console: true,
+              Buffer: true,
+              setTimeout: true,
+              clearTimeout: true,
+              setInterval: true,
+              clearInterval: true
+          }
+      });
+      RED.library.create({
+          url:"functions", // where to get the data from
+          type:"function", // the type of object the library is for
+          editor:this.editor, // the field name the main text body goes to
+          mode:"ace/mode/javascript",
+          fields:['name','outputs']
+      });
+      this.editor.focus();
+    },
+    oneditsave: function() {
+        var annot = this.editor.getSession().getAnnotations();
+        this.noerr = 0;
+        $("#node-input-noerr").val(0);
+        for (var k=0; k < annot.length; k++) {
+            //console.log(annot[k].type,":",annot[k].text, "on line", annot[k].row);
+            if (annot[k].type === "error") {
+                $("#node-input-noerr").val(annot.length);
+                this.noerr = annot.length;
+            }
+        }
+        $("#node-input-func").val(this.editor.getValue());
+        this.editor.destroy();
+        delete this.editor;
+    },
+    oneditcancel: function() {
+        this.editor.destroy();
+        delete this.editor;
+    },
+    oneditresize: function(size) {
+        var rows = $("#dialog-form>div:not(.node-text-editor-row)");
+        var height = $("#dialog-form").height();
+        for (var i=0; i<rows.size(); i++) {
+            height -= $(rows[i]).outerHeight(true);
+        }
+        var editorRow = $("#dialog-form>div.node-text-editor-row");
+        height -= (parseInt(editorRow.css("marginTop"))+parseInt(editorRow.css("marginBottom")));
+        $(".node-text-editor").css("height",height+"px");
+        this.editor.resize();
+    }
+  });
+</script>
