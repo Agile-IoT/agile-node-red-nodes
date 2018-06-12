@@ -101,7 +101,7 @@ module.exports = function(RED) {
         });
     };
 
-    RED.nodes.registerType("agile-thinkspeak",ThingSpeakNode, {
+    RED.nodes.registerType("agile-thingspeak",ThingSpeakNode, {
         credentials: {
             apiKey: {required:true}
         }

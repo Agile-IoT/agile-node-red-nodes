@@ -1,5 +1,5 @@
 <script type="text/javascript">
-    RED.nodes.registerType('agile-thinkspeak',{
+    RED.nodes.registerType('agile-thingspeak',{
         category: 'function',
         color: '#e87d81',
         credentials: {
@@ -22,12 +22,12 @@
         outputs:0,
         icon: "bridge.png",
         label: function() {
-            return this.name||"agile-thinkspeak";
+            return this.name||"agile-thingspeak";
         }
     });
 </script>
 
-<script type="text/x-red" data-template-name="agile-thinkspeak">
+<script type="text/x-red" data-template-name="agile-thingspeak">
     <div class="form-row">
         <label for="node-input-name"><i class="icon-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
@@ -78,7 +78,7 @@
     </div>
 </script>
 
-<script type="text/x-red" data-help-name="agile-thinkspeak">
+<script type="text/x-red" data-help-name="agile-thingspeak">
     <p>Aggregate values and post them to a ThingSpeak channel.</p>
 
     <p>When data arrives, it is stored for a configurable period of time and then
