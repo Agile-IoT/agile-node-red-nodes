@@ -55,7 +55,8 @@ module.exports = function (RED) {
 
                 if (sockets) {
                     if (sockets[identifier]) {
-                        node.send({ payload: 'The device is already on' });
+                        msg.payload = 'The device is already on';
+                        node.send(msg);
                         return;
                     }
                 } else {
@@ -90,8 +91,6 @@ module.exports = function (RED) {
                 ws.on('message', function(data) {
                     d('Data received %s', data);
 
-                    node.log("WebSocket data: " + data);
-
                     try {
                         payload = JSON.parse(data);
                     } catch(e) {
@@ -104,10 +103,12 @@ module.exports = function (RED) {
                 sockets[identifier] = ws
                 flowContext.set('sockets', sockets);
             } else {
-                node.send({ payload: 'There are missing configuration parameters' });
+                msg.payload = 'There are missing configuration parameters';
+                node.send(msg);
                 return;
             }
-            node.send({ payload: 'The device was started successfully' });
+            msg.payload = 'The device was started successfully';
+            node.send(msg);
         })
 
         node.on('close', function() {
