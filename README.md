@@ -48,7 +48,7 @@ Output:
 
 After successful start the ``msg.payload`` of the output will the following string, if no error is thrown: 
 ```
-msg.payload = "The device was successfully stopped"
+msg.payload = "The device was successfully started"
 ```
 
 
