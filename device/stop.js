@@ -58,16 +58,21 @@ module.exports = function (RED) {
                         sockets[identifier].close();
                         delete sockets[identifier];
                         flowContext.set('sockets', sockets);
+                        msg.payload = 'The device was successfully stopped';
+                        node.send(msg);
+                        return;
                     }
-                } else {
-                    node.send({ payload: 'The device does not exist' });
-                    return;
-                }
+                 }
             } else {
-                node.send({ payload: 'There are missing configuration parameters' });
+                msg.payload = 'There are missing configuration parameters';
+                node.send(msg);
                 return;
             }
-            node.send({ payload: 'The device was sucessfully stopped' });
+
+            msg.payload = 'The device does not exist';
+            node.send(msg);
+            return;
+
         })
     })
 }
