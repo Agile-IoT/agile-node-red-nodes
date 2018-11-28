@@ -30,7 +30,8 @@
       "agile-device-execute": "./device/execute.js",
       "agile-device-write": "./device/write.js",
       "agile-device-start": "./device/start.js",
-      "agile-device-stop": "./device/stop.js"
+      "agile-device-stop": "./device/stop.js",
+      "agile-device-decoder": "./device/decoder.js"
     }
   },
   "dependencies": {
